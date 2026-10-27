@@ -6,3 +6,4 @@
 - Assume readers know TypeScript but are new to NestJS. Add clear comments around Nest-specific concepts: decorators, controllers, modules, request bodies, response handling, instance lifecycle, and application startup. Explain what each part does and why it is needed without explaining basic TypeScript syntax.
 - Keep comments accurate when changing behavior and preserve the small example's structure.
 - Keep storage in the injectable `CacheService`, separate from the HTTP controller, so it acts as a small database layer.
+- Use `@nestjs/cache-manager` and `cache-manager` for the in-memory cache, with no automatic expiry. Preserve the existing endpoint behavior when changing storage.

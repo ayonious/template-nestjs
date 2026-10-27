@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { pathToFileURL } from 'node:url';
 import { Body, Controller, Get, Module, Post } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { CacheModule } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service.js';
 
 // A controller groups HTTP handlers. This prefix makes every route below start at /data.
@@ -32,7 +33,13 @@ class DataController {
 
 // A module tells Nest which controllers and services belong to the application.
 // Registering CacheService as a provider lets Nest create it and inject it into the controller.
-@Module({ controllers: [DataController], providers: [CacheService] })
+@Module({
+  // Imports make another module's providers available here. The default cache store
+  // uses memory in this process, so restarting the app still clears its data.
+  imports: [CacheModule.register()],
+  controllers: [DataController],
+  providers: [CacheService],
+})
 class AppModule {}
 
 // The factory builds the app from its root module, using the installed Express adapter.

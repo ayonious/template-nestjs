@@ -13,7 +13,10 @@ Runs on port 3000 (override with `PORT`).
 Each POST replaces the previous value. Restarting the app clears the cache.
 
 The controller handles HTTP requests and delegates storage to an injected `CacheService`
-in `src/cache.service.ts`. This keeps the data layer separate, ready to replace with a database later.
+in `src/cache.service.ts`. The service uses Nest's official `@nestjs/cache-manager`
+integration with the third-party `cache-manager` package. Its in-memory store needs
+no separate server; entries have no automatic expiry. The controller stays separate
+from storage, ready for a different backend later.
 
 ```sh
 curl -X POST http://localhost:3000/data \
