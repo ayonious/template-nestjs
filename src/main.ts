@@ -3,36 +3,36 @@ import 'reflect-metadata';
 import { pathToFileURL } from 'node:url';
 import { Body, Controller, Get, Module, Post } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { CacheService } from './cache.service.js';
 
 // A controller groups HTTP handlers. This prefix makes every route below start at /data.
 // Nest creates and manages the controller instance when the application starts.
 @Controller('data')
 class DataController {
-  // Controller instances are shared across requests by default, so this value persists
-  // between POST and GET calls. This simple in-memory cache is lost on restart.
-  private cache: Record<string, unknown> | null = null;
+  // Nest reads this constructor's parameter type and injects the registered service.
+  // The controller handles HTTP; the service owns storage, like a database layer.
+  constructor(private readonly cache: CacheService) {}
 
   // With no extra path, @Post() handles POST /data. Nest defaults POST responses to 201.
   @Post()
   // @Body() supplies the parsed JSON request body as this method's argument.
   // The TypeScript type describes the expected shape; it does not validate incoming JSON.
   save(@Body() data: Record<string, unknown>) {
-    this.cache = data;
     // Nest serializes the returned object into the HTTP response automatically.
-    return this.cache;
+    return this.cache.save(data);
   }
 
   // @Get() handles GET /data and defaults to status 200.
   @Get()
   get() {
     // Returning null produces an empty response body before anything has been saved.
-    return this.cache;
+    return this.cache.get();
   }
 }
 
 // A module tells Nest which controllers and services belong to the application.
-// This app only needs one controller, so no separate service or cache package is needed.
-@Module({ controllers: [DataController] })
+// Registering CacheService as a provider lets Nest create it and inject it into the controller.
+@Module({ controllers: [DataController], providers: [CacheService] })
 class AppModule {}
 
 // The factory builds the app from its root module, using the installed Express adapter.

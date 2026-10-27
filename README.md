@@ -12,6 +12,9 @@ Runs on port 3000 (override with `PORT`).
 
 Each POST replaces the previous value. Restarting the app clears the cache.
 
+The controller handles HTTP requests and delegates storage to an injected `CacheService`
+in `src/cache.service.ts`. This keeps the data layer separate, ready to replace with a database later.
+
 ```sh
 curl -X POST http://localhost:3000/data \
   -H 'Content-Type: application/json' \
