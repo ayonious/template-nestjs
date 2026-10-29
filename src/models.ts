@@ -44,3 +44,19 @@ export class ApiError {
   @ApiProperty({ format: 'date-time', example: '2026-01-01T00:00:00.000Z' })
   timestamp!: string;
 }
+
+export class LoginInput {
+  @ApiProperty({ example: '1', minLength: 1, maxLength: 100 })
+  userId!: string;
+
+  @ApiProperty({ example: 'Demo-user-1!', format: 'password', minLength: 1, maxLength: 256 })
+  password!: string;
+}
+
+export class CreateUserInput {
+  @ApiProperty({ example: 'Taylor', minLength: 1, maxLength: 100 })
+  name!: string;
+
+  @ApiProperty({ example: 'my-demo-password', format: 'password', minLength: 1, maxLength: 256 })
+  password!: string;
+}

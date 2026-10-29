@@ -1,6 +1,8 @@
-import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery, ApiNotFoundResponse, ApiBadRequestResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
-import { ApiError, User, Sale } from './models.js';
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery, ApiNotFoundResponse, ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiCreatedResponse, ApiBasicAuth, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
+import { ApiError, User, Sale, CreateUserInput } from './models.js';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Post, Req, UseGuards, NotFoundException, Param, Query } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CredentialsService } from './credentials.service.js';
 import { LimitPipe } from './limit.pipe.js';
 import { DataService } from './data.service.js';
 
@@ -11,7 +13,21 @@ import { DataService } from './data.service.js';
 @Controller('users')
 export class UsersController {
   // Nest injects the same registered storage provider used by SalesController.
-  constructor(private readonly data: DataService) {}
+  constructor(private readonly data: DataService, private readonly credentials: CredentialsService) {}
+
+  @ApiOperation({ summary: 'Create a user with a chosen password' })
+  @ApiCreatedResponse({ type: User })
+  @ApiBadRequestResponse({ type: ApiError, description: 'Invalid name or password' })
+  @Post()
+  createUser(@Body() input: CreateUserInput) {
+    // Nest provides parsed JSON; validate it before creating either record.
+    if (!input || typeof input.name !== 'string' || !input.name.trim() || input.name.length > 100
+      || typeof input.password !== 'string' || !input.password.trim() || input.password.length > 256) {
+      throw new BadRequestException('name and password must be non-empty strings (max 100 and 256 characters)');
+    }
+    // The service creates a public user and a matching record in the password database.
+    return this.credentials.createUser(input.name.trim(), input.password);
+  }
 
   // @Get() without a path lists /users. @Query reads the optional ?limit= value.
   // The pipe validates it before this handler runs; Nest serializes the result as JSON.
@@ -25,14 +41,20 @@ export class UsersController {
   }
 
   // :userId is a variable path segment. @Param reads it as a string.
-  @ApiOperation({ summary: 'Get a user' })
+  @ApiOperation({ summary: 'Get your user record with matching user ID and password' })
+  @ApiBasicAuth()
+  @ApiUnauthorizedResponse({ type: ApiError, description: 'Missing or invalid credentials' })
+  @ApiForbiddenResponse({ type: ApiError, description: 'Credentials belong to a different user' })
+  @UseGuards(AuthGuard('basic'))
   @ApiOkResponse({ type: User, isArray: false })
   @ApiNotFoundResponse({ type: ApiError, description: 'User not found' })
   @Get(':userId')
-  getUser(@Param('userId') userId: string) {
+  getUser(@Param('userId') userId: string, @Req() request: { user: User }) {
     const user = this.data.getUser(userId);
     // Nest converts this exception into an HTTP 404 JSON response.
     if (!user) throw new NotFoundException('User not found');
+    // Authentication checks the password; this check ties it to the requested user ID.
+    if (request.user.id !== userId) throw new ForbiddenException('Cannot access another user');
     return user;
   }
 

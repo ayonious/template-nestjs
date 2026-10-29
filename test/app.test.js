@@ -3,6 +3,16 @@ import { test } from 'node:test';
 // Test the compiled app with plain JavaScript and Node's built-in test runner.
 import { createApp } from '../dist/main.js';
 
+// Only individual user lookup requires Basic credentials; other routes keep their behavior.
+function fetch(url, options) {
+  const path = new URL(url).pathname;
+  const match = /^\/users\/([^/]+)$/.exec(path);
+  const id = match && /^\d+$/.test(match[1]) && Number(match[1]) <= 10 ? match[1] : '1';
+  return globalThis.fetch(url, match ? {
+    ...options, headers: { Authorization: `Basic ${Buffer.from(`${id}:Demo-user-${id}!`).toString('base64')}`, ...options?.headers },
+  } : options);
+}
+
 test('user and sales routes respect ownership and missing records', async (t) => {
   const app = await createApp();
   t.after(() => app.close());

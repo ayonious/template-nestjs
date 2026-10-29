@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 // @Injectable makes this class a provider that Nest can inject into controllers.
 // Nest creates one shared instance per application by default. This service acts
-// as a tiny database layer with fixed dummy records, ready as soon as it is created.
+// as a tiny database layer with initial dummy records and users created at runtime.
 @Injectable()
 export class DataService {
   private readonly users: User[] = [
@@ -46,6 +46,12 @@ export class DataService {
     { id: '124', userId: '10', productName: 'Mug', price: 9.5, createdAt: '2026-02-24T10:00:00.000Z' },
     { id: '125', userId: '10', productName: 'Keyboard', price: 59, createdAt: '2026-02-25T10:00:00.000Z' },
   ];
+
+  createUser(name: string) {
+    const user = { id: String(this.users.length + 1), name, createdAt: new Date().toISOString() };
+    this.users.push(user);
+    return user;
+  }
 
   // Keep fixture order (oldest first); an omitted limit returns the whole collection.
   getUsers(limit?: number) {
