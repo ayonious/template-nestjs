@@ -1,0 +1,26 @@
+{
+  "name": "nestjs-bootstrap",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@1.22.22",
+  "scripts": {
+    "build": "tsc",
+    "start": "yarn build && node dist/main.js",
+    "test": "yarn build && node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@nestjs/cache-manager": "^12.0.2",
+    "@nestjs/common": "^12.3.2",
+    "@nestjs/core": "^12.3.2",
+    "@nestjs/platform-express": "^12.3.2",
+    "cache-manager": "^7.2.9",
+    "keyv": "^6.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}
