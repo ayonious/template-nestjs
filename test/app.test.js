@@ -1,33 +1,105 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-// Test the compiled TypeScript app with plain JavaScript and Node's built-in test runner.
+// Test the compiled app with plain JavaScript and Node's built-in test runner.
 import { createApp } from '../dist/main.js';
 
-test('POST caches JSON and GET returns the latest data', async (t) => {
+test('user and sales routes respect ownership and missing records', async (t) => {
   const app = await createApp();
-  // Close Nest's HTTP server after the test, even when an assertion fails.
   t.after(() => app.close());
-  // Port 0 asks the OS for an available port, avoiding clashes with a running app.
   await app.listen(0, '127.0.0.1');
-  const url = `${await app.getUrl()}/data`;
+  const url = await app.getUrl();
 
-  // Exercise real HTTP requests, including Nest's routing and response serialization.
-  const empty = await fetch(url);
-  assert.equal(empty.status, 200);
-  assert.equal(await empty.text(), '');
+  const user = await fetch(`${url}/users/1`);
+  assert.equal(user.status, 200);
+  assert.deepEqual(await user.json(), { id: '1', name: 'Alice', createdAt: '2026-01-01T09:00:00.000Z' });
 
-  // A second POST checks that the cache replaces its previous value.
-  for (const data of [{ message: 'hello', nested: { count: 1 } }, { message: 'updated' }]) {
-    const saved = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    assert.equal(saved.status, 201);
-    assert.deepEqual(await saved.json(), data);
+  const sale = await fetch(`${url}/users/1/sales/101`);
+  assert.equal(sale.status, 200);
+  assert.deepEqual(await sale.json(), {
+    id: '101', userId: '1', productName: 'Notebook', price: 12,
+    createdAt: '2026-02-01T10:00:00.000Z',
+  });
 
-    const cached = await fetch(url);
-    assert.equal(cached.status, 200);
-    assert.deepEqual(await cached.json(), data);
+  for (const [userId, ids] of [['1', ['101', '102']], ['2', ['103']], ['3', []]]) {
+    const response = await fetch(`${url}/sales/${userId}`);
+    assert.equal(response.status, 200);
+    const sales = await response.json();
+    assert.deepEqual(sales.map((item) => item.id), ids);
+    assert.ok(sales.every((item) => item.userId === userId));
+  }
+
+  const allSaleIds = new Set();
+  for (let id = 1; id <= 10; id++) {
+    const userResponse = await fetch(`${url}/users/${id}`);
+    assert.equal(userResponse.status, 200);
+    assert.equal((await userResponse.json()).id, String(id));
+    const salesResponse = await fetch(`${url}/sales/${id}`);
+    assert.equal(salesResponse.status, 200);
+    const sales = await salesResponse.json();
+    assert.ok(sales.length <= 5);
+    for (const item of sales) {
+      assert.equal(item.userId, String(id));
+      assert.equal(typeof item.productName, 'string');
+      assert.ok(item.productName.length > 0);
+      assert.ok(Number.isFinite(item.price) && item.price > 0);
+      assert.ok(!allSaleIds.has(item.id));
+      allSaleIds.add(item.id);
+      const detail = await fetch(`${url}/users/${id}/sales/${item.id}`);
+      assert.equal(detail.status, 200);
+      assert.deepEqual(await detail.json(), item);
+    }
+  }
+  assert.equal((await fetch(`${url}/users/11`)).status, 404);
+
+  for (const path of ['/users/missing', '/sales/missing', '/users/1/sales/missing',
+    '/users/2/sales/101', '/users/missing/sales/101']) {
+    const response = await fetch(`${url}${path}`);
+    assert.equal(response.status, 404, path);
+    assert.equal((await response.json()).statusCode, 404);
+  }
+});
+
+test('previous example endpoints are no longer exposed', async (t) => {
+  const app = await createApp();
+  t.after(() => app.close());
+  await app.listen(0, '127.0.0.1');
+  const url = await app.getUrl();
+
+  for (const [method, path] of [
+    ['GET', '/data'], ['POST', '/data'],
+    ['GET', '/notes'], ['POST', '/notes'], ['GET', '/date'],
+  ]) {
+    const response = await fetch(`${url}${path}`, { method });
+    assert.equal(response.status, 404, `${method} ${path}`);
+  }
+});
+
+test('collection routes return timestamps and validate optional limits', async (t) => {
+  const app = await createApp();
+  t.after(() => app.close());
+  await app.listen(0, '127.0.0.1');
+  const url = await app.getUrl();
+
+  for (const [resource, count] of [['users', 10], ['sales', 25]]) {
+    const response = await fetch(`${url}/${resource}/`);
+    assert.equal(response.status, 200);
+    const records = await response.json();
+    assert.equal(records.length, count);
+    for (const record of records) {
+      assert.equal(new Date(record.createdAt).toISOString(), record.createdAt);
+    }
+    for (const limit of [0, 1, 5, 100]) {
+      const limited = await fetch(`${url}/${resource}?limit=${limit}`);
+      assert.equal(limited.status, 200);
+      assert.deepEqual(await limited.json(), records.slice(0, limit));
+    }
+    for (const query of ['limit=-1', 'limit=1.5', 'limit=abc', 'limit=',
+      'limit=9007199254740992', 'limit=1&limit=2']) {
+      const invalid = await fetch(`${url}/${resource}?${query}`);
+      assert.equal(invalid.status, 400, query);
+    }
+    const first = records[0];
+    const path = resource === 'users' ? `/users/${first.id}` : `/users/${first.userId}/sales/${first.id}`;
+    assert.deepEqual(await (await fetch(`${url}${path}`)).json(), first);
   }
 });
