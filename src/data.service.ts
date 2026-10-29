@@ -1,3 +1,4 @@
+import { User, Sale } from './models.js';
 import { Injectable } from '@nestjs/common';
 
 // @Injectable makes this class a provider that Nest can inject into controllers.
@@ -67,18 +68,4 @@ export class DataService {
     // Check ownership as well as the sale ID for the nested user route.
     return this.sales.find((sale) => sale.userId === userId && sale.id === saleId) ?? null;
   }
-}
-
-interface User {
-  id: string;
-  name: string;
-  createdAt: string;
-}
-
-interface Sale {
-  id: string;
-  userId: string;
-  productName: string;
-  price: number;
-  createdAt: string;
 }

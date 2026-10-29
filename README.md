@@ -64,3 +64,53 @@ Run the JavaScript HTTP integration test with Node's built-in test runner:
 ```sh
 yarn test
 ```
+
+## Interactive API documentation
+
+After `yarn start`, open [Swagger UI](http://localhost:3000/docs) to browse and
+try all five endpoints. The OpenAPI document is available at
+[docs-json](http://localhost:3000/docs-json).
+
+Swagger decorators on controllers describe operations, optional limits, response
+models, and errors. `src/models.ts` uses classes with `@ApiProperty()` because
+interfaces do not exist at runtime. These decorators document response shapes;
+they do not add request validation. `configureApp()` shares Swagger setup between
+normal startup and tests.
+
+## Tests and dependency injection
+
+`yarn test` builds the app and runs JavaScript tests with Node's built-in runner.
+`test/app.test.js` checks real dummy data, limits, timestamps, and missing records.
+`test/controllers.test.js` uses `Test.createTestingModule()` from `@nestjs/testing`
+and `.overrideProvider(DataService).useValue(fake)` to supply controlled test data
+through Nest's dependency injection container. Each endpoint has its own HTTP test,
+so routing, pipes, response serialization, and errors are exercised as well.
+Swagger UI, its JavaScript asset, and the generated OpenAPI document are tested too.
+
+See Nest's [Swagger documentation](https://docs.nestjs.com/openapi/introduction)
+and [testing utilities](https://docs.nestjs.com/fundamentals/testing) for more.
+
+## Exception handling
+
+`ApiExceptionFilter` is registered through Nest's `APP_FILTER` token, so it handles
+errors across all routes and can receive injected dependencies. `@Catch()` catches
+both built-in HTTP exceptions and unexpected failures. It returns a consistent body:
+
+```json
+{
+  "statusCode": 404,
+  "message": "User not found",
+  "path": "/users/unknown",
+  "timestamp": "2026-01-01T00:00:00.000Z"
+}
+```
+
+- **400:** invalid collection limit, for example `/users?limit=-1`.
+- **404:** missing user or sale, including a sale requested under the wrong user.
+- **500:** unexpected failure, with a generic `Internal server error` message;
+  internal details are logged on the server.
+
+Swagger shows the shared `ApiError` schema for these responses. Tests assert the
+error bodies and Swagger schemas, and replace service methods with failing fakes
+to test 500 handling on each endpoint without adding artificial failure routes.
+See Nest's [exception filter documentation](https://docs.nestjs.com/exception-filters).

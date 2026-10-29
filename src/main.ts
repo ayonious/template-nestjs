@@ -1,8 +1,10 @@
 // Loads the runtime metadata support Nest uses with decorators.
 import 'reflect-metadata';
 import { pathToFileURL } from 'node:url';
-import { Module } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { INestApplication, Module } from '@nestjs/common';
+import { ApiExceptionFilter } from './api-exception.filter.js';
+import { APP_FILTER, NestFactory } from '@nestjs/core';
 import { DataService } from './data.service.js';
 
 import { UsersController } from './users.controller.js';
@@ -14,15 +16,29 @@ import { SalesController } from './sales.controller.js';
   controllers: [UsersController, SalesController],
   // Nest creates one instance of each provider per application by default.
   // All storage controllers receive the same DataService instance.
-  providers: [DataService],
+  // APP_FILTER registers the filter globally while keeping constructor injection.
+  providers: [DataService, { provide: APP_FILTER, useClass: ApiExceptionFilter }],
 })
-class AppModule {}
+export class AppModule {}
 
 // The factory builds the app from its root module, using the installed Express adapter.
 // Creating the app separately from listening lets the test choose its own port.
-export function createApp() {
+// Keep configuration shared so tests and normal startup expose identical docs.
+export function configureApp(app: INestApplication) {
+  const config = new DocumentBuilder()
+    .setTitle('Users and sales API')
+    .setDescription('A small NestJS example with injected dummy data.')
+    .setVersion('1.0')
+    .build();
+  // Swagger scans controller metadata to build OpenAPI and serves an interactive UI.
+  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+}
+
+export async function createApp() {
   // Disable Nest's startup logs to keep this example and its test output small.
-  return NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.create(AppModule, { logger: false });
+  configureApp(app);
+  return app;
 }
 
 // Start listening only when this file is run directly, not when a test imports it.
