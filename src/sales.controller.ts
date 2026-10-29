@@ -1,4 +1,5 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import { LimitPipe } from './limit.pipe.js';
 import { DataService } from './data.service.js';
 
 // A separate controller exposes the sales collection for a user.
@@ -6,6 +7,13 @@ import { DataService } from './data.service.js';
 export class SalesController {
   // Constructor injection shares DataService instead of creating a second store.
   constructor(private readonly data: DataService) {}
+
+  // @Get() without a path lists /sales. @Query reads the optional ?limit= value.
+  // The pipe validates it before this handler runs; Nest serializes the result as JSON.
+  @Get()
+  getAllSales(@Query('limit', LimitPipe) limit?: number) {
+    return this.data.getAllSales(limit);
+  }
 
   // Here the path segment is a USER ID, e.g. GET /sales/1 lists Alice's sales.
   @Get(':userId')

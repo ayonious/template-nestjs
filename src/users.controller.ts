@@ -1,4 +1,5 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import { LimitPipe } from './limit.pipe.js';
 import { DataService } from './data.service.js';
 
 // This prefix applies to both the user route and its nested sale route.
@@ -6,6 +7,13 @@ import { DataService } from './data.service.js';
 export class UsersController {
   // Nest injects the same registered storage provider used by SalesController.
   constructor(private readonly data: DataService) {}
+
+  // @Get() without a path lists /users. @Query reads the optional ?limit= value.
+  // The pipe validates it before this handler runs; Nest serializes the result as JSON.
+  @Get()
+  getUsers(@Query('limit', LimitPipe) limit?: number) {
+    return this.data.getUsers(limit);
+  }
 
   // :userId is a variable path segment. @Param reads it as a string.
   @Get(':userId')

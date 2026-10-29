@@ -11,12 +11,13 @@ test('user and sales routes respect ownership and missing records', async (t) =>
 
   const user = await fetch(`${url}/users/1`);
   assert.equal(user.status, 200);
-  assert.deepEqual(await user.json(), { id: '1', name: 'Alice' });
+  assert.deepEqual(await user.json(), { id: '1', name: 'Alice', createdAt: '2026-01-01T09:00:00.000Z' });
 
   const sale = await fetch(`${url}/users/1/sales/101`);
   assert.equal(sale.status, 200);
   assert.deepEqual(await sale.json(), {
     id: '101', userId: '1', productName: 'Notebook', price: 12,
+    createdAt: '2026-02-01T10:00:00.000Z',
   });
 
   for (const [userId, ids] of [['1', ['101', '102']], ['2', ['103']], ['3', []]]) {
@@ -70,5 +71,35 @@ test('previous example endpoints are no longer exposed', async (t) => {
   ]) {
     const response = await fetch(`${url}${path}`, { method });
     assert.equal(response.status, 404, `${method} ${path}`);
+  }
+});
+
+test('collection routes return timestamps and validate optional limits', async (t) => {
+  const app = await createApp();
+  t.after(() => app.close());
+  await app.listen(0, '127.0.0.1');
+  const url = await app.getUrl();
+
+  for (const [resource, count] of [['users', 10], ['sales', 25]]) {
+    const response = await fetch(`${url}/${resource}/`);
+    assert.equal(response.status, 200);
+    const records = await response.json();
+    assert.equal(records.length, count);
+    for (const record of records) {
+      assert.equal(new Date(record.createdAt).toISOString(), record.createdAt);
+    }
+    for (const limit of [0, 1, 5, 100]) {
+      const limited = await fetch(`${url}/${resource}?limit=${limit}`);
+      assert.equal(limited.status, 200);
+      assert.deepEqual(await limited.json(), records.slice(0, limit));
+    }
+    for (const query of ['limit=-1', 'limit=1.5', 'limit=abc', 'limit=',
+      'limit=9007199254740992', 'limit=1&limit=2']) {
+      const invalid = await fetch(`${url}/${resource}?${query}`);
+      assert.equal(invalid.status, 400, query);
+    }
+    const first = records[0];
+    const path = resource === 'users' ? `/users/${first.id}` : `/users/${first.userId}/sales/${first.id}`;
+    assert.deepEqual(await (await fetch(`${url}${path}`)).json(), first);
   }
 });
