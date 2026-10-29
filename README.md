@@ -7,8 +7,9 @@ yarn start
 
 Runs on port 3000 (override with `PORT`).
 
-The app seeds three users and three sales in the cache at startup. Each sale has
-an `id` and a `userId` linking it to its owner. IDs in URLs are strings.
+The app contains 10 dummy users (IDs `1`–`10`), each with 0–5 sales.
+Each sale has `id`, `userId`, `productName`, and `price` fields. IDs are strings.
+The records are fixed in memory, so repeated requests return the same data.
 
 | Endpoint | Example | Result |
 | --- | --- | --- |
@@ -22,10 +23,13 @@ Missing users or sales return 404. A sale requested under the wrong user also
 returns 404, for example `/users/2/sales/101`.
 
 `UsersController` handles the first two routes, while `SalesController` handles
-the third. Both receive the same `CacheService` through constructor injection.
-The service owns collection storage and queries. Its `onModuleInit()` lifecycle
-hook seeds the cache before Nest starts serving requests, with no automatic expiry.
-Restarting recreates these example records.
+the third. Both receive the same `DataService` through constructor injection.
+The service owns the dummy collections and queries; no cache or external database
+is needed. For example, sale `101` is:
+
+```json
+{ "id": "101", "userId": "1", "productName": "Notebook", "price": 12 }
+```
 
 ```sh
 curl http://localhost:3000/users/1
@@ -33,22 +37,17 @@ curl http://localhost:3000/users/1/sales/101
 curl http://localhost:3000/sales/1
 ```
 
-`AppModule` in `src/main.ts` registers both controllers and `CacheService`.
-Controllers map HTTP routes to service calls. Nest awaits returned promises and
-serializes results as JSON with status 200.
+`AppModule` in `src/main.ts` registers both controllers and `DataService`.
+Controllers map HTTP routes to service calls. Nest serializes returned objects and arrays as JSON with status 200.
 
 At startup, Nest creates providers and injects them through constructors:
 
-- `UsersController` → `CacheService` → `CACHE_MANAGER`
-- `SalesController` → the same `CacheService` instance
+- `UsersController` → `DataService`
+- `SalesController` → the same `DataService` instance
 
 The controller constructor's class type tells Nest which provider to supply.
-Inside `CacheService`, `@Inject(CACHE_MANAGER)` selects a provider by token instead.
-`CacheModule.register()` supplies that token through Nest's official
-`@nestjs/cache-manager` integration with `cache-manager`.
-
 Providers are shared instances within an application by default. Storage stays
-in `CacheService`, acting as a small database layer. Its in-memory store needs
+in `DataService`, acting as a small database layer. Its in-memory store needs
 no separate server. `@Param()` extracts named URL segments as strings, while
 `NotFoundException` tells Nest to return an HTTP 404 JSON response.
 

@@ -3,8 +3,7 @@ import 'reflect-metadata';
 import { pathToFileURL } from 'node:url';
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { CacheModule } from '@nestjs/cache-manager';
-import { CacheService } from './cache.service.js';
+import { DataService } from './data.service.js';
 
 import { UsersController } from './users.controller.js';
 import { SalesController } from './sales.controller.js';
@@ -12,13 +11,10 @@ import { SalesController } from './sales.controller.js';
 // A module tells Nest which controllers and providers belong to the application.
 // Each controller handles one resource; providers can be shared by all controllers.
 @Module({
-  // CacheModule supplies the CACHE_MANAGER token used inside CacheService.
-  // Its default store lives in this process, so restarting clears the saved data.
-  imports: [CacheModule.register()],
   controllers: [UsersController, SalesController],
   // Nest creates one instance of each provider per application by default.
-  // All storage controllers receive the same CacheService instance.
-  providers: [CacheService],
+  // All storage controllers receive the same DataService instance.
+  providers: [DataService],
 })
 class AppModule {}
 
