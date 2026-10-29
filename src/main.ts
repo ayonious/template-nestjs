@@ -5,10 +5,6 @@ import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service.js';
-import { DateService } from './date.service.js';
-import { DataController } from './data.controller.js';
-import { NotesController } from './notes.controller.js';
-import { DateController } from './date.controller.js';
 
 import { UsersController } from './users.controller.js';
 import { SalesController } from './sales.controller.js';
@@ -19,10 +15,10 @@ import { SalesController } from './sales.controller.js';
   // CacheModule supplies the CACHE_MANAGER token used inside CacheService.
   // Its default store lives in this process, so restarting clears the saved data.
   imports: [CacheModule.register()],
-  controllers: [DataController, NotesController, DateController, UsersController, SalesController],
+  controllers: [UsersController, SalesController],
   // Nest creates one instance of each provider per application by default.
   // All storage controllers receive the same CacheService instance.
-  providers: [CacheService, DateService],
+  providers: [CacheService],
 })
 class AppModule {}
 

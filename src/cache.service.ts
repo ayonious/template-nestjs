@@ -11,6 +11,7 @@ export class CacheService implements OnModuleInit {
 
   // Nest calls this lifecycle hook once this provider's dependencies are ready,
   // before serving requests. Seed small collections so the GET routes work immediately.
+  // TTL 0 keeps these records in memory without automatic expiry.
   async onModuleInit() {
     await this.cache.set('users', [
       { id: '1', name: 'Alice' },
@@ -39,17 +40,6 @@ export class CacheService implements OnModuleInit {
     return (await this.getSales(userId)).find((sale) => sale.id === saleId) ?? null;
   }
 
-  async save(data: Record<string, unknown>, resource: 'data' | 'notes' = 'data') {
-    // Each resource has its own latest value. TTL 0 means no automatic expiry.
-    await this.cache.set(resource, data, 0);
-    return data;
-  }
-
-  async get(resource: 'data' | 'notes' = 'data') {
-    // Cache reads are asynchronous so the store could also be backed by Redis later.
-    // Convert a missing entry to null to preserve the empty GET response.
-    return (await this.cache.get<Record<string, unknown>>(resource)) ?? null;
-  }
 }
 
 // These types describe stored records; userId links each sale to its owner.
