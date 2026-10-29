@@ -9,15 +9,15 @@ export class CacheService {
   // Nest supplies the shared third-party cache instance instead of us creating one.
   constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
 
-  async save(data: Record<string, unknown>) {
-    // One key preserves the latest-value behavior. TTL 0 means no automatic expiry.
-    await this.cache.set('data', data, 0);
+  async save(data: Record<string, unknown>, resource: 'data' | 'notes' = 'data') {
+    // Each resource has its own latest value. TTL 0 means no automatic expiry.
+    await this.cache.set(resource, data, 0);
     return data;
   }
 
-  async get() {
+  async get(resource: 'data' | 'notes' = 'data') {
     // Cache reads are asynchronous so the store could also be backed by Redis later.
     // Convert a missing entry to null to preserve the empty GET response.
-    return (await this.cache.get<Record<string, unknown>>('data')) ?? null;
+    return (await this.cache.get<Record<string, unknown>>(resource)) ?? null;
   }
 }

@@ -1,44 +1,25 @@
-// Loads the runtime metadata support Nest uses with TypeScript decorators.
+// Loads the runtime metadata support Nest uses with decorators.
 import 'reflect-metadata';
 import { pathToFileURL } from 'node:url';
-import { Body, Controller, Get, Module, Post } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CacheService } from './cache.service.js';
+import { DateService } from './date.service.js';
+import { DataController } from './data.controller.js';
+import { NotesController } from './notes.controller.js';
+import { DateController } from './date.controller.js';
 
-// A controller groups HTTP handlers. This prefix makes every route below start at /data.
-// Nest creates and manages the controller instance when the application starts.
-@Controller('data')
-class DataController {
-  // Nest reads this constructor's parameter type and injects the registered service.
-  // The controller handles HTTP; the service owns storage, like a database layer.
-  constructor(private readonly cache: CacheService) {}
-
-  // With no extra path, @Post() handles POST /data. Nest defaults POST responses to 201.
-  @Post()
-  // @Body() supplies the parsed JSON request body as this method's argument.
-  // The TypeScript type describes the expected shape; it does not validate incoming JSON.
-  save(@Body() data: Record<string, unknown>) {
-    // Nest serializes the returned object into the HTTP response automatically.
-    return this.cache.save(data);
-  }
-
-  // @Get() handles GET /data and defaults to status 200.
-  @Get()
-  get() {
-    // Returning null produces an empty response body before anything has been saved.
-    return this.cache.get();
-  }
-}
-
-// A module tells Nest which controllers and services belong to the application.
-// Registering CacheService as a provider lets Nest create it and inject it into the controller.
+// A module tells Nest which controllers and providers belong to the application.
+// Each controller handles one resource; providers can be shared by all controllers.
 @Module({
-  // Imports make another module's providers available here. The default cache store
-  // uses memory in this process, so restarting the app still clears its data.
+  // CacheModule supplies the CACHE_MANAGER token used inside CacheService.
+  // Its default store lives in this process, so restarting clears the saved data.
   imports: [CacheModule.register()],
-  controllers: [DataController],
-  providers: [CacheService],
+  controllers: [DataController, NotesController, DateController],
+  // Nest creates one instance of each provider per application by default.
+  // Both storage controllers receive the same CacheService instance.
+  providers: [CacheService, DateService],
 })
 class AppModule {}
 
