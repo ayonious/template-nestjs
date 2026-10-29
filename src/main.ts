@@ -10,15 +10,18 @@ import { DataController } from './data.controller.js';
 import { NotesController } from './notes.controller.js';
 import { DateController } from './date.controller.js';
 
+import { UsersController } from './users.controller.js';
+import { SalesController } from './sales.controller.js';
+
 // A module tells Nest which controllers and providers belong to the application.
 // Each controller handles one resource; providers can be shared by all controllers.
 @Module({
   // CacheModule supplies the CACHE_MANAGER token used inside CacheService.
   // Its default store lives in this process, so restarting clears the saved data.
   imports: [CacheModule.register()],
-  controllers: [DataController, NotesController, DateController],
+  controllers: [DataController, NotesController, DateController, UsersController, SalesController],
   // Nest creates one instance of each provider per application by default.
-  // Both storage controllers receive the same CacheService instance.
+  // All storage controllers receive the same CacheService instance.
   providers: [CacheService, DateService],
 })
 class AppModule {}
