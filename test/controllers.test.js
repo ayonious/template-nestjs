@@ -2,15 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Test } from '@nestjs/testing';
 import { AppModule, configureApp } from '../dist/main.js';
-import { CredentialsService } from '../dist/credentials.service.js';
 import { DataService } from '../dist/data.service.js';
 
 const user = { id: 'test-user', name: 'Test user', createdAt: '2026-01-01T00:00:00.000Z' };
-// Test resource controllers with the fake authenticated user provided below.
-function fetch(url, options = {}) {
-  return globalThis.fetch(url, { ...options, headers: { Authorization: `Basic ${Buffer.from('test-user:demo').toString('base64')}`, ...options.headers } });
-}
-
 const sale = { id: 'test-sale', userId: user.id, productName: 'Test product', price: 7,
   createdAt: '2026-02-01T00:00:00.000Z' };
 
@@ -27,9 +21,6 @@ async function createTestApp(t, overrides = {}) {
       getSale: (id, saleId) => id === user.id && saleId === sale.id ? sale : null,
       ...overrides,
     })
-    // These tests isolate resource controllers; auth is covered with real password records separately.
-    .overrideProvider(CredentialsService)
-    .useValue({ validate: () => user })
     .compile();
   // Use real HTTP so route decorators, pipes, serialization, and errors are tested.
   const app = module.createNestApplication({ logger: false });
@@ -79,7 +70,7 @@ test('Swagger serves interactive docs and documents every API endpoint', async (
   assert.equal(response.status, 200);
   const document = await response.json();
   assert.deepEqual(Object.keys(document.paths).sort(), [
-    '/auth/login', '/auth/profile', '/users', '/sales', '/users/{userId}', '/users/{userId}/sales/{saleId}', '/sales/{userId}',
+    '/users', '/sales', '/users/{userId}', '/users/{userId}/sales/{saleId}', '/sales/{userId}',
   ].sort());
   for (const path of ['/users', '/sales']) {
     const operation = document.paths[path].get;

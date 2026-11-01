@@ -45,18 +45,8 @@ export class ApiError {
   timestamp!: string;
 }
 
-export class LoginInput {
-  @ApiProperty({ example: '1', minLength: 1, maxLength: 100 })
-  userId!: string;
-
-  @ApiProperty({ example: 'Demo-user-1!', format: 'password', minLength: 1, maxLength: 256 })
-  password!: string;
-}
-
+// Swagger describes the JSON body; the controller validates its name field.
 export class CreateUserInput {
   @ApiProperty({ example: 'Taylor', minLength: 1, maxLength: 100 })
   name!: string;
-
-  @ApiProperty({ example: 'my-demo-password', format: 'password', minLength: 1, maxLength: 256 })
-  password!: string;
 }

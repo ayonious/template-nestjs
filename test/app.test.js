@@ -3,16 +3,6 @@ import { test } from 'node:test';
 // Test the compiled app with plain JavaScript and Node's built-in test runner.
 import { createApp } from '../dist/main.js';
 
-// Only individual user lookup requires Basic credentials; other routes keep their behavior.
-function fetch(url, options) {
-  const path = new URL(url).pathname;
-  const match = /^\/users\/([^/]+)$/.exec(path);
-  const id = match && /^\d+$/.test(match[1]) && Number(match[1]) <= 10 ? match[1] : '1';
-  return globalThis.fetch(url, match ? {
-    ...options, headers: { Authorization: `Basic ${Buffer.from(`${id}:Demo-user-${id}!`).toString('base64')}`, ...options?.headers },
-  } : options);
-}
-
 test('user and sales routes respect ownership and missing records', async (t) => {
   const app = await createApp();
   t.after(() => app.close());
@@ -112,4 +102,33 @@ test('collection routes return timestamps and validate optional limits', async (
     const path = resource === 'users' ? `/users/${first.id}` : `/users/${first.userId}/sales/${first.id}`;
     assert.deepEqual(await (await fetch(`${url}${path}`)).json(), first);
   }
+});
+
+test('create users with a name and read them without credentials', async (t) => {
+  const app = await createApp();
+  t.after(() => app.close());
+  await app.listen(0, '127.0.0.1');
+  const url = await app.getUrl();
+  const post = (body) => fetch(`${url}/users`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const response = await post({ name: ' Taylor ' });
+  assert.equal(response.status, 201);
+  const user = await response.json();
+  assert.equal(user.name, 'Taylor');
+  assert.equal(user.id, '11');
+  assert.equal(new Date(user.createdAt).toISOString(), user.createdAt);
+  assert.deepEqual(await (await fetch(`${url}/users/${user.id}`)).json(), user);
+  for (const body of [{}, { name: '' }, { name: ' ' }, { name: 1 }, { name: 'x'.repeat(101) }]) {
+    assert.equal((await post(body)).status, 400);
+  }
+  assert.equal((await (await fetch(`${url}/users`)).json()).length, 11);
+  for (const [method, path] of [['POST', '/auth/login'], ['GET', '/auth/profile']]) {
+    assert.equal((await fetch(`${url}${path}`, { method })).status, 404);
+  }
+  const docs = await (await fetch(`${url}/docs-json`)).json();
+  assert.ok(docs.paths['/users'].post.responses['201']);
+  assert.ok(docs.paths['/users'].post.responses['400']);
+  assert.equal(docs.paths['/users/{userId}'].get.security, undefined);
+  assert.equal(docs.components.schemas.CreateUserInput.properties.password, undefined);
 });

@@ -5,10 +5,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication, Module } from '@nestjs/common';
 import { ApiExceptionFilter } from './api-exception.filter.js';
 import { APP_FILTER, NestFactory } from '@nestjs/core';
-import { PassportModule } from '@nestjs/passport';
-import { AuthController } from './auth.controller.js';
-import { CredentialsService } from './credentials.service.js';
-import { BasicStrategy } from './basic.strategy.js';
 import { loggingOptions } from './logging.js';
 import { DataService } from './data.service.js';
 
@@ -18,13 +14,11 @@ import { SalesController } from './sales.controller.js';
 // A module tells Nest which controllers and providers belong to the application.
 // Each controller handles one resource; providers can be shared by all controllers.
 @Module({
-  // Passport runs stateless authentication; no session store is needed.
-  imports: [PassportModule.register({ session: false })],
-  controllers: [UsersController, SalesController, AuthController],
+  controllers: [UsersController, SalesController],
   // Nest creates one instance of each provider per application by default.
   // All storage controllers receive the same DataService instance.
   // APP_FILTER registers the filter globally while keeping constructor injection.
-  providers: [DataService, CredentialsService, BasicStrategy, { provide: APP_FILTER, useClass: ApiExceptionFilter }],
+  providers: [DataService, { provide: APP_FILTER, useClass: ApiExceptionFilter }],
 })
 export class AppModule {}
 
@@ -36,14 +30,13 @@ export function configureApp(app: INestApplication) {
     .setTitle('Users and sales API')
     .setDescription('A small NestJS example with injected dummy data.')
     .setVersion('1.0')
-    .addBasicAuth()
     .build();
   // Swagger scans controller metadata to build OpenAPI and serves an interactive UI.
   SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
 }
 
 export async function createApp() {
-  // LOG_LEVEL controls Nest startup/error logs; requests never log passwords.
+  // LOG_LEVEL controls Nest startup and error logs.
   const app = await NestFactory.create(AppModule, { logger: loggingOptions() });
   configureApp(app);
   return app;
