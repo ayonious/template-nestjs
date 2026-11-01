@@ -13,13 +13,45 @@ The app runs at http://localhost:3000. Open [the API documentation](http://local
 
 ## What’s inside
 
-- **NestJS decorators (annotations):** `@Module()` connects the app’s parts, `@Controller()` groups routes, `@Get()` and `@Post()` define endpoints, `@Body()` reads JSON, `@Param()` reads URL values, and `@Query()` reads query options.
-- **Shared services:** `@Injectable()` lets Nest supply the same `DataService` instance to controllers, keeping storage separate from request handling.
-- **Validation and errors:** a custom `LimitPipe` checks list limits, the controller checks user names, and `@Catch()` with a global exception filter gives errors a consistent JSON response.
-- **Packages and integrations:** `@nestjs/common` and `@nestjs/core` provide Nest’s building blocks; `@nestjs/platform-express` runs the HTTP server; `@nestjs/swagger` adds API documentation; `reflect-metadata` supports decorators; RxJS is included for Nest’s reactive support; and `@nestjs/testing` provides test utilities.
-- **Swagger documentation:** `@ApiTags()` groups endpoints, `@ApiOperation()` describes them, `@ApiQuery()` documents list limits, and `@ApiProperty()` describes fields and examples. `@ApiOkResponse()`, `@ApiCreatedResponse()`, `@ApiBadRequestResponse()`, `@ApiNotFoundResponse()`, and `@ApiInternalServerErrorResponse()` document success and error responses. `DocumentBuilder` and `SwaggerModule` generate the interactive `/docs` page and `/docs-json` specification, including request bodies and response models.
-- **Testing:** JavaScript tests use Node’s built-in test runner and assertions, plus `@nestjs/testing` to replace services with fake data. HTTP tests check routes, validation, errors, and Swagger output. Jest is not used.
-- **Startup and logging:** `NestFactory` starts the app. `PORT` changes the default port, and `LOG_LEVEL` enables `error`, `info`, or `debug` logs. Logging is off by default.
+- **Swagger:** Creates documentation for each endpoint, including inputs, example data, and possible responses. After starting the app, open [http://localhost:3000/docs](http://localhost:3000/docs) to read the docs and try requests in your browser. The generated OpenAPI file is available at [/docs-json](http://localhost:3000/docs-json).
+
+- **NestJS decorators:** These annotations tell Nest how the app is organized and how to handle requests.
+  - `@Module()` — connects the controllers and services that make up the app.
+  - `@Controller()` — groups related endpoints under a URL, such as `/users`.
+  - `@Get()` — handles requests to read data.
+  - `@Post()` — handles requests to create data.
+  - `@Body()` — reads the JSON sent with a request, such as a new user’s name.
+  - `@Param()` — reads a value from the URL, such as the user ID in `/users/1`.
+  - `@Query()` — reads an option after `?` in the URL, such as `limit` in `/users?limit=5`.
+  - `@Injectable()` — lets Nest create a service and share it with controllers that need it.
+  - `@Catch()` — marks the class that handles errors and turns them into JSON responses.
+
+- **Swagger decorators:** Describe what appears in the API documentation.
+  - `@ApiTags()` — groups endpoints by topic, such as users or sales.
+  - `@ApiOperation()` — adds a short description of an endpoint.
+  - `@ApiQuery()` — describes query options, such as the list limit.
+  - `@ApiProperty()` — describes a data field and gives an example value.
+  - `@ApiOkResponse()` — describes a successful read (200).
+  - `@ApiCreatedResponse()` — describes a successful creation (201).
+  - `@ApiBadRequestResponse()` — describes invalid input (400).
+  - `@ApiNotFoundResponse()` — describes a missing record (404).
+  - `@ApiInternalServerErrorResponse()` — describes an unexpected error (500).
+
+- **Shared data service:** `DataService` stores users and sales in memory. Controllers ask it for data, keeping storage separate from request handling.
+
+- **Input checks and error handling:** Checks user names and list limits before using them. Errors return a consistent JSON response with a message and status code.
+
+- **Packages used:**
+  - `@nestjs/common` and `@nestjs/core` — the main NestJS building blocks.
+  - `@nestjs/platform-express` — connects Nest to the Express HTTP server.
+  - `@nestjs/swagger` — generates the API documentation.
+  - `reflect-metadata` — helps Nest read information attached by decorators.
+  - `rxjs` — a supporting library used by Nest for streams of values and events.
+  - `@nestjs/testing` — helps create test apps and replace real services with fake data.
+
+- **Testing:** JavaScript tests use Node’s built-in test runner. They check endpoints, input checks, error responses, logging options, and API documentation. Run them with `yarn test`.
+
+- **Startup and logging:** `NestFactory` creates the app. It listens on port 3000 unless you set `PORT`. Logging is off by default; set `LOG_LEVEL` to `error`, `info`, or `debug` to see logs.
 
 ## Commands
 
