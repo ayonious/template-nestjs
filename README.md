@@ -37,18 +37,6 @@ The app runs at http://localhost:3000. Open [the API documentation](http://local
   - `@ApiNotFoundResponse()` — describes a missing record (404).
   - `@ApiInternalServerErrorResponse()` — describes an unexpected error (500).
 
-- **Shared data service:** `DataService` stores users and sales in memory. Controllers ask it for data, keeping storage separate from request handling.
-
-- **Input checks and error handling:** Checks user names and list limits before using them. Errors return a consistent JSON response with a message and status code.
-
-- **Packages used:**
-  - `@nestjs/common` and `@nestjs/core` — the main NestJS building blocks.
-  - `@nestjs/platform-express` — connects Nest to the Express HTTP server.
-  - `@nestjs/swagger` — generates the API documentation.
-  - `reflect-metadata` — helps Nest read information attached by decorators.
-  - `rxjs` — a supporting library used by Nest for streams of values and events.
-  - `@nestjs/testing` — helps create test apps and replace real services with fake data.
-
 - **Testing:** JavaScript tests use Node’s built-in test runner. They check endpoints, input checks, error responses, logging options, and API documentation. Run them with `yarn test`.
 
 - **Startup and logging:** `NestFactory` creates the app. It listens on port 3000 unless you set `PORT`. Logging is off by default; set `LOG_LEVEL` to `error`, `info`, or `debug` to see logs.
