@@ -1,8 +1,8 @@
 import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery, ApiNotFoundResponse, ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiCreatedResponse } from '@nestjs/swagger';
-import { ApiError, User, Sale, CreateUserInput } from './models.js';
+import { ApiError, User, Sale, CreateUserInput } from '../models/models.js';
 import { BadRequestException, Body, Controller, Get, Post, NotFoundException, Param, Query } from '@nestjs/common';
-import { LimitPipe } from './limit.pipe.js';
-import { DataService } from './data.service.js';
+import { LimitPipe } from '../pipes/limit.pipe.js';
+import { DataService } from '../services/data.service.js';
 
 // This prefix applies to both the user route and its nested sale route.
 // Swagger decorators describe these routes in the interactive API documentation.

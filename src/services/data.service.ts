@@ -1,4 +1,4 @@
-import { User, Sale } from './models.js';
+import { User, Sale } from '../models/models.js';
 import { Injectable } from '@nestjs/common';
 
 // @Injectable makes this class a provider that Nest can inject into controllers.

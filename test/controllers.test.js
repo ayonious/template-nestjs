@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Test } from '@nestjs/testing';
 import { AppModule, configureApp } from '../dist/main.js';
-import { DataService } from '../dist/data.service.js';
+import { DataService } from '../dist/services/data.service.js';
 
 const user = { id: 'test-user', name: 'Test user', createdAt: '2026-01-01T00:00:00.000Z' };
 const sale = { id: 'test-sale', userId: user.id, productName: 'Test product', price: 7,

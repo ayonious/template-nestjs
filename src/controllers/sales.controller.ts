@@ -1,8 +1,8 @@
 import { ApiTags, ApiOperation, ApiOkResponse, ApiQuery, ApiNotFoundResponse, ApiBadRequestResponse, ApiInternalServerErrorResponse } from '@nestjs/swagger';
-import { ApiError, User, Sale } from './models.js';
+import { ApiError, User, Sale } from '../models/models.js';
 import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
-import { LimitPipe } from './limit.pipe.js';
-import { DataService } from './data.service.js';
+import { LimitPipe } from '../pipes/limit.pipe.js';
+import { DataService } from '../services/data.service.js';
 
 // A separate controller exposes the sales collection for a user.
 // Swagger decorators describe these routes in the interactive API documentation.

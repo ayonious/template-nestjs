@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { loggingOptions } from '../dist/logging.js';
+import { loggingOptions } from '../dist/utils/logging.js';
 
 test('logging option supports off, error, info, debug and rejects typos', () => {
   assert.equal(loggingOptions('off'), false);

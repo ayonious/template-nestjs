@@ -3,13 +3,13 @@ import 'reflect-metadata';
 import { pathToFileURL } from 'node:url';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication, Module } from '@nestjs/common';
-import { ApiExceptionFilter } from './api-exception.filter.js';
+import { ApiExceptionFilter } from './filters/api-exception.filter.js';
 import { APP_FILTER, NestFactory } from '@nestjs/core';
-import { loggingOptions } from './logging.js';
-import { DataService } from './data.service.js';
+import { loggingOptions } from './utils/logging.js';
+import { DataService } from './services/data.service.js';
 
-import { UsersController } from './users.controller.js';
-import { SalesController } from './sales.controller.js';
+import { UsersController } from './controllers/users.controller.js';
+import { SalesController } from './controllers/sales.controller.js';
 
 // A module tells Nest which controllers and providers belong to the application.
 // Each controller handles one resource; providers can be shared by all controllers.
